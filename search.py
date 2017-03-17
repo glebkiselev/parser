@@ -276,7 +276,10 @@ def add_numbers():
                         strings.remove(string)
                     else:
                         good.append((post[0], string))
-            df = pandas.DataFrame([good])
+            if good:
+                df = pandas.DataFrame([good])
+            else:
+                df = pandas.DataFrame([posts])
             book = load_workbook(filename)
             writer = pandas.ExcelWriter(filename, engine='openpyxl')
             writer.book = book
