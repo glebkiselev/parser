@@ -148,23 +148,26 @@ def get_text(html):
             div = div.get_text()
             div_saver.append(div)
 
-    div_saver2 = div_saver.copy()
 
-    for text in div_saver2:
-        # get text - если soup.body.get_text() - вернет только боди тд по аналогии
-        # text = soup.get_text()
 
-        # break into lines and remove leading and trailing space on each
-        lines = (line.strip() for line in text.splitlines())
-        # break multi-headlines into a line each
-        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-        # drop blank lines
-        text2 = ".".join(chunk for chunk in chunks if chunk)
-        div_saver.remove(text)
-        div_saver.append(text2)
+        div_saver2 = div_saver.copy()
 
-    return div_saver
+        for text in div_saver2:
+            # get text - если soup.body.get_text() - вернет только боди тд по аналогии
+            # text = soup.get_text()
 
+            # break into lines and remove leading and trailing space on each
+            lines = (line.strip() for line in text.splitlines())
+            # break multi-headlines into a line each
+            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+            # drop blank lines
+            text2 = ".".join(chunk for chunk in chunks if chunk)
+            div_saver.remove(text)
+            div_saver.append(text2)
+
+        return div_saver
+    else:
+        return " "
 
 def read_url(url):
     html = None
