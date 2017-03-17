@@ -2,6 +2,8 @@
 from urllib.request import urlopen
 from urllib import error
 import re
+
+import itertools
 from bs4 import BeautifulSoup
 import csv
 
@@ -14,7 +16,7 @@ import flask_excel as excel
 from flask import Flask
 from flask import request, render_template, redirect, url_for, jsonify
 from openpyxl import load_workbook
-
+import pandas
 
 UPLOAD_FOLDER = 'data'
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'csv', 'xls', 'xlsx', 'docx'])
@@ -132,8 +134,9 @@ def get_links(html, url, visited):
     return truelinks2
 
 
-def get_text(html, link):
-    soup = BeautifulSoup(html, "lxml")
+def get_text(html):
+    if html:
+        soup = BeautifulSoup(html, "lxml")
 
     # kill all script and style elements
     for script in soup(["script", "style"]):
@@ -147,7 +150,7 @@ def get_text(html, link):
 
     div_saver2 = div_saver.copy()
 
-    for idx, text in enumerate(div_saver2):
+    for text in div_saver2:
         # get text - если soup.body.get_text() - вернет только боди тд по аналогии
         # text = soup.get_text()
 
@@ -156,7 +159,7 @@ def get_text(html, link):
         # break multi-headlines into a line each
         chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
         # drop blank lines
-        text2 = link.join(chunk for chunk in chunks if chunk)
+        text2 = ".".join(chunk for chunk in chunks if chunk)
         div_saver.remove(text)
         div_saver.append(text2)
 
@@ -194,7 +197,7 @@ def main_alg(url, link, words, posts, visited_links, depth):
     except error.URLError as err:
         return posts
     # получаем строку с текстом в cсылке
-    text_full = list(set(get_text(html, link)))
+    text_full = list(set(get_text(html)))
     # ищем слова и получаем назад список постов, где они были найдены
     for text in text_full:
         fwords = find_words(link, text, words, posts)
@@ -202,6 +205,7 @@ def main_alg(url, link, words, posts, visited_links, depth):
             posts.extend([list(set(fwords) - set(posts)), text])
         posts = list(set(posts))
         print("posts are found: {0}".format(len(posts)))
+
         # for post in posts:
         # print(post)
     # получаем все ссылки ресурса
@@ -246,6 +250,10 @@ def add_numbers():
     #    words.append(word3)
   # список найденных постов
     depth = 3  # размерность поиска вглубину (кол-во страниц сайта, которые мы просмотрим)
+
+
+    filename = 'reader.xlsx'
+
     if len(urls) > 1:
         for url in urls:
             posts = []
@@ -255,12 +263,28 @@ def add_numbers():
             if url[len(url)-1] == " ":
                 url = del_probel(url)
             posts = set(main_alg(url, url, words, posts, visited_links, depth))
-            wb = Workbook()
-            ws = wb['data']
-            for row in posts:
-                ws.append(row)
-            filename = 'static'+url + '.xlsx'
-            wb.save(filename=filename)
+            good = []
+            copy = posts.copy()
+            marks = ["jaguar", "bmw", "mazda", "opel", "citr", "ягуар", "бмв", "мерс", "landrover"]
+            cost = ["cost", "цен", "скид", "руб", "процент", "клиент", "%"]
+            compon = list(itertools.product(marks, cost))
+            for post in copy:
+                strings = post[1].split(".")
+                copy2 = strings.copy()
+                for string in copy2:
+                    if not any(words[0] in string.lower() and words[1] in string.lower() for words in compon):
+                        strings.remove(string)
+                    else:
+                        good.append((post[0], string))
+            df = pandas.DataFrame([good])
+            book = load_workbook(filename)
+            writer = pandas.ExcelWriter(filename, engine='openpyxl')
+            writer.book = book
+            writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
+
+            df.to_excel(writer, "Main")
+
+            writer.save()
 
             # with open('file.xlsx', 'w') as out:
             #     csv_out = csv.writer(out)
@@ -271,6 +295,8 @@ def add_numbers():
             # for post in posts:
             #     str_to_serv = str(post) + str_to_serv
             # return jsonify(result=str_to_serv)
+
+
 
 def del_probel(url):
     url = url[:-1]
