@@ -138,15 +138,15 @@ def get_text(html):
     if html:
         soup = BeautifulSoup(html, "lxml")
 
-    # kill all script and style elements
-    for script in soup(["script", "style"]):
-        script.extract()  # rip it out
+        # kill all script and style elements
+        for script in soup(["script", "style"]):
+            script.extract()  # rip it out
 
-    # get all div
-    div_saver = []
-    for div in soup(["div"]):
-        div = div.get_text()
-        div_saver.append(div)
+        # get all div
+        div_saver = []
+        for div in soup(["div"]):
+            div = div.get_text()
+            div_saver.append(div)
 
     div_saver2 = div_saver.copy()
 
