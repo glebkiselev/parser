@@ -170,15 +170,15 @@ def get_text(html):
         return " "
 
 def read_url(url):
-    html = None
     with urlopen(url) as data:
         enc = data.info().get_content_charset('utf-8')
         try:
             html = data.read().decode(enc)
         except UnicodeDecodeError:
             print("bad unicode decoding")
-    if html:
-        return html
+            return None
+
+    return html
 
 
 def find_words(url, text, words, posts):
@@ -199,6 +199,8 @@ def main_alg(url, link, words, posts, visited_links, depth):
         html = read_url(link)
     except error.URLError as err:
         return posts
+    if not html:
+        html = ''
     # получаем строку с текстом в cсылке
     text_full = list(set(get_text(html)))
     # ищем слова и получаем назад список постов, где они были найдены
@@ -252,7 +254,7 @@ def add_numbers():
     # if len(word3.strip()) > 0:
     #    words.append(word3)
   # список найденных постов
-    depth = 3  # размерность поиска вглубину (кол-во страниц сайта, которые мы просмотрим)
+    depth = 2  # размерность поиска вглубину (кол-во страниц сайта, которые мы просмотрим)
 
 
     filename = 'reader.xlsx'
@@ -269,28 +271,42 @@ def add_numbers():
             good = []
             copy = posts.copy()
             marks = ["jaguar", "bmw", "mazda", "opel", "citr", "ягуар", "бмв", "мерс", "landrover"]
-            cost = ["cost", "цен", "скид", "руб", "процент", "клиент", "%"]
-            compon = list(itertools.product(marks, cost))
-            for post in copy:
+            costs = ["cost", "цен", "скид", "руб", "процент", "клиент", "%"]
+            compons = list(itertools.product(marks, costs))
+            posts = list(posts)
+            for post in posts:
                 strings = post[1].split(".")
-                copy2 = strings.copy()
-                for string in copy2:
-                    if not any(words[0] in string.lower() and words[1] in string.lower() for words in compon):
-                        strings.remove(string)
-                    else:
-                        good.append((post[0], string))
-            if good:
-                df = pandas.DataFrame([good])
-            else:
-                df = pandas.DataFrame([posts])
+                for string in strings:
+                    for compon in compons:
+                        if compon[0] in string and compon[1] in post[1]:
+                            good.append((post[0], compon[0], post[1]))
+
+
+            # for post in copy:
+            #     strings = post[1].split(".")
+            #     copy2 = strings.copy()
+            #     for string in copy2:
+            #         if not any(words[0] in string.lower() and words[1] in string.lower() for words in compon):
+            #             strings.remove(string)
+            #         else:
+            #             good.append((post[0], string))
+            # if good:
+            #     df = pandas.DataFrame([good])
+            # else:
+
+            labels = ['link', 'mark', 'post']
+            df = pandas.DataFrame.from_records(good, columns=labels)
             book = load_workbook(filename)
             writer = pandas.ExcelWriter(filename, engine='openpyxl')
             writer.book = book
             writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
 
-            df.to_excel(writer, "Main")
+            df.to_excel(writer, "Main", columns=labels)
 
             writer.save()
+            # with pandas.ExcelWriter('reader.xlsx', engine='openpyxl') as writer:
+            #     writer.book = load_workbook('reader.xlsx')
+            #     df.to_excel(writer, "Main")
 
             # with open('file.xlsx', 'w') as out:
             #     csv_out = csv.writer(out)
