@@ -255,14 +255,14 @@ def add_numbers():
     # if len(word3.strip()) > 0:
     #    words.append(word3)
   # список найденных постов
-    depth = 3  # размерность поиска вглубину (кол-во страниц сайта, которые мы просмотрим)
+    depth = 2  # размерность поиска вглубину (кол-во страниц сайта, которые мы просмотрим)
 
 
     # read from csv marks and models
 
     cars_file = "static/cars_csv.csv"
 
-    mm = read_csv(cars_file)
+    marks_and_models = read_csv(cars_file)
 
 
     filename = 'reader.xlsx'
@@ -276,19 +276,17 @@ def add_numbers():
             if url[len(url)-1] == " ":
                 url = del_probel(url)
             posts = set(main_alg(url, url, words, posts, visited_links, depth))
+            print("Im in alg!")
             good = []
-            copy = posts.copy()
-            marks = mm[0]
-            models = mm[1]
             costs = ["cost", "цен", "скид", "руб", "процент", "клиент", "%"]
-            compons = list(itertools.product(marks, models, costs))
+            compons = list(itertools.product(marks_and_models, costs))
             posts = list(posts)
             for post in posts:
                 strings = post[1].split(".")
                 for string in strings:
                     for compon in compons:
-                        if compon[0] in string and compon[1] in post[1] and compon[2] in post[1]:
-                            good.append((post[0], compon[0], compon[1], post[1]))
+                        if compon[0][0] in string and compon[0][1] in post[1] and compon[1] in post[1]:
+                            good.append((post[0], compon[0][0], compon[0][1], post[1]))
 
 
             # for post in copy:
