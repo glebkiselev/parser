@@ -236,6 +236,7 @@ def main_alg(url, link, words, posts, visited_links, depth):
 @app.route('/_findwords')
 def add_numbers():
     #urls = request.args.get('url')
+    # read from test_check keywords and links
     a= execsear()
     urls=[]
     urls.extend(a[0])
@@ -257,6 +258,13 @@ def add_numbers():
     depth = 3  # размерность поиска вглубину (кол-во страниц сайта, которые мы просмотрим)
 
 
+    # read from csv marks and models
+
+    cars_file = "static/cars_csv.csv"
+
+    mm = read_csv(cars_file)
+
+
     filename = 'reader.xlsx'
 
     if len(urls) > 1:
@@ -270,16 +278,17 @@ def add_numbers():
             posts = set(main_alg(url, url, words, posts, visited_links, depth))
             good = []
             copy = posts.copy()
-            marks = ["jaguar", "bmw", "mazda", "opel", "citr", "ягуар", "бмв", "мерс", "landrover"]
+            marks = mm[0]
+            models = mm[1]
             costs = ["cost", "цен", "скид", "руб", "процент", "клиент", "%"]
-            compons = list(itertools.product(marks, costs))
+            compons = list(itertools.product(marks, models, costs))
             posts = list(posts)
             for post in posts:
                 strings = post[1].split(".")
                 for string in strings:
                     for compon in compons:
-                        if compon[0] in string and compon[1] in post[1]:
-                            good.append((post[0], compon[0], post[1]))
+                        if compon[0] in string and compon[1] in post[1] and compon[2] in post[1]:
+                            good.append((post[0], compon[0], compon[1], post[1]))
 
 
             # for post in copy:
@@ -294,7 +303,7 @@ def add_numbers():
             #     df = pandas.DataFrame([good])
             # else:
 
-            labels = ['link', 'mark', 'post']
+            labels = ['link', 'mark', 'model', 'post']
             df = pandas.DataFrame.from_records(good, columns=labels)
             book = load_workbook(filename)
             writer = pandas.ExcelWriter(filename, engine='openpyxl')
@@ -318,7 +327,17 @@ def add_numbers():
             #     str_to_serv = str(post) + str_to_serv
             # return jsonify(result=str_to_serv)
 
+def read_csv(cars_file):
 
+    with open(cars_file, encoding='mac_roman') as f:
+        datas = [line for line in csv.reader(f)]
+    list_data = []
+    for data in datas:
+        data = data[0].split(";")
+        if data[0]:
+            list_data.append((data[0], data[1]))
+
+    return list_data
 
 def del_probel(url):
     url = url[:-1]
@@ -333,7 +352,7 @@ def index():
     return render_template('index.html')
 
 
-def execsear(row=None):
+def execsear():
     wb = load_workbook('static/test_check.xlsx')
     ws = wb['data']
     links = []
