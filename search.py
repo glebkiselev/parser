@@ -304,8 +304,7 @@ def index():
 
 
 def execsear():
-    #wb = load_workbook('static/test_check.xlsx')
-    wb = load_workbook('reader.xlsx')
+    wb = load_workbook('static/test_check.xlsx')
     ws = wb['data']
     links = []
     words = []
