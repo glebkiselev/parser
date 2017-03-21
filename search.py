@@ -146,6 +146,8 @@ def main_alg(url, link, words, posts, visited_links, depth):
         html = read_url(link)
     except error.URLError as err:
         return posts
+    except UnicodeEncodeError:
+        return posts
     if not html:
         html = ''
     # получаем строку с текстом в cсылке
@@ -200,7 +202,9 @@ def add_numbers():
             urls_for_process = list(group(urls, 5))
             iterater = 0
             for url in urls_for_process:
+                # for csv files
                 filepath = str(iterater) + ".csv"
+                # for xlsx file: filename
                 subprocess.call(['touch', filepath])
                 post_searcher(url, words, depth, marks_and_models, filepath)
                 iterater+=1
@@ -220,10 +224,13 @@ def post_searcher(urls, words, depth, marks_and_models, filename):
     for url in urls:
         posts = []
         visited_links = [url]  # was here
+        if url[len(url) - 1] == " ":
+            url = del_end_probel(url)
+        if url[0] == " ":
+            url = del_start_probel(url)
         if not url.startswith("http://") and not url.startswith("https://"):
             url = 'http://' + url
-        if url[len(url) - 1] == " ":
-            url = del_probel(url)
+
         posts = set(main_alg(url, url, words, posts, visited_links, depth))
         if len(posts) < 10:
             continue
@@ -274,10 +281,19 @@ def read_csv(cars_file):
 
     return list_data
 
-def del_probel(url):
+
+def del_start_probel(url):
+    url = url[1:]
+    if url[0] == " ":
+       url = del_start_probel(url)
+       return url
+    else:
+        return url
+
+def del_end_probel(url):
     url = url[:-1]
     if url[len(url) - 1] == " ":
-       url = del_probel(url)
+       url = del_end_probel(url)
        return url
     else:
         return url
@@ -288,7 +304,8 @@ def index():
 
 
 def execsear():
-    wb = load_workbook('static/test_check.xlsx')
+    #wb = load_workbook('static/test_check.xlsx')
+    wb = load_workbook('reader.xlsx')
     ws = wb['data']
     links = []
     words = []
