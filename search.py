@@ -195,18 +195,20 @@ def add_numbers():
     # read from csv marks and models
     cars_file = "static/cars_csv.csv"
     marks_and_models = read_csv(cars_file)
-    filename = 'reader.xlsx'
+
 
     if len(urls) > 1:
             # разбиваю по 10 итого 50 url
             urls_for_process = list(group(urls, 5))
             iterater = 0
             for url in urls_for_process:
+                # for xlsx file:
+                filename = 'reader.xlsx'
                 # for csv files
-                filepath = str(iterater) + ".csv"
+                #filename = str(iterater) + ".csv"
                 # for xlsx file: filename
-                subprocess.call(['touch', filepath])
-                post_searcher(url, words, depth, marks_and_models, filepath)
+                #subprocess.call(['touch', filepath])
+                post_searcher(url, words, depth, marks_and_models, filename)
                 iterater+=1
 
 
@@ -247,9 +249,9 @@ def post_searcher(urls, words, depth, marks_and_models, filename):
                         good.append((post[0], compon[0][0], compon[0][1], post[1]))
 
         # to write for excisting xlsx
-        #write_xlsx(good, filename)
+        write_xlsx(good, filename)
         # to wite for excisting csv
-        write_csv(good, filename)
+        #write_csv(good, filename)
 
 def write_csv(good, filename):
     with open(filename, 'a') as resultFile:
