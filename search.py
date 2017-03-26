@@ -203,11 +203,11 @@ def add_numbers():
             iterater = 0
             for url in urls_for_process:
                 # for xlsx file:
-                filename = 'reader.xlsx'
+                #filename = 'reader.xlsx'
                 # for csv files
-                #filename = str(iterater) + ".csv"
+                filename = str(iterater) + ".csv"
                 # for xlsx file: filename
-                #subprocess.call(['touch', filepath])
+                subprocess.call(['touch', filename])
                 post_searcher(url, words, depth, marks_and_models, filename)
                 iterater+=1
 
@@ -249,9 +249,9 @@ def post_searcher(urls, words, depth, marks_and_models, filename):
                         good.append((post[0], compon[0][0], compon[0][1], post[1]))
 
         # to write for excisting xlsx
-        write_xlsx(good, filename)
+        #write_xlsx(good, filename)
         # to wite for excisting csv
-        #write_csv(good, filename)
+        write_csv(good, filename)
 
 def write_csv(good, filename):
     with open(filename, 'a') as resultFile:
