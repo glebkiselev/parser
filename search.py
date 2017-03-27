@@ -11,9 +11,8 @@ from flask import Flask
 from flask import request, render_template, redirect, url_for, jsonify
 from openpyxl import load_workbook
 import pandas
-from multiprocessing import Pool, Process
-from multiprocessing.dummy import Pool as ThreadPool
 import subprocess
+import regex
 
 
 UPLOAD_FOLDER = 'data'
@@ -134,7 +133,12 @@ def find_words(url, text, words, posts):
             if url not in posts:
                 pattern = re.compile(word, re.IGNORECASE)
                 text = pattern.sub(word, text)
-                posts.append((url, text))
+                treedate = regex.findall(
+                    "с ([0-9]{2}[/.-][0-9]{2}[/.-][0-9]{2,4}) по ([0-9]{2}[/.-][0-9]{2}[/.-][0-9]{2,4})",
+                    text)
+                twodate = regex.findall("с ([0-9]{2}[/.-][0-9]{2}) по ([0-9]{2}[/.-][0-9]{2})", text)
+                if len(treedate) or len(twodate):
+                    posts.append((url, text))
     return posts
 
 
@@ -158,7 +162,8 @@ def main_alg(url, link, words, posts, visited_links, depth):
         if fwords and fwords[0] not in posts:
             posts.extend([list(set(fwords) - set(posts)), text])
         posts = list(set(posts))
-        print("posts are found: {0}".format(len(posts)))
+        if len(posts):
+            print("posts are found: {0}".format(len(posts)))
 
         # for post in posts:
         # print(post)
@@ -203,11 +208,11 @@ def add_numbers():
             iterater = 0
             for url in urls_for_process:
                 # for xlsx file:
-                filename = 'reader.xlsx'
+                #filename = 'reader.xlsx'
                 # for csv files
-                #filename = str(iterater) + ".csv"
+                filename = str(iterater) + ".csv"
                 # for xlsx file: filename
-                #subprocess.call(['touch', filepath])
+                subprocess.call(['touch', filename])
                 post_searcher(url, words, depth, marks_and_models, filename)
                 iterater+=1
 
@@ -244,14 +249,26 @@ def post_searcher(urls, words, depth, marks_and_models, filename):
         for post in posts:
             strings = post[1].split(".")
             for string in strings:
-                for compon in compons:
-                    if compon[0][0] in string and compon[0][1] in post[1] and compon[1] in post[1]:
-                        good.append((post[0], compon[0][0], compon[0][1], post[1]))
+                treedate = regex.findall(
+                    "с ([0-9]{2}[/.-][0-9]{2}[/.-][0-9]{2,4}) по ([0-9]{2}[/.-][0-9]{2}[/.-][0-9]{2,4})",
+                    string)
+                twodate = regex.findall("с ([0-9]{2}[/.-][0-9]{2}) по ([0-9]{2}[/.-][0-9]{2})", string)
+                if len(treedate):
+                    print("in tree date")
+                    for compon in compons:
+                        if compon[0][0] in string and compon[0][1] in post[1] and compon[1] in post[1]:
+                            good.append((post[0], compon[0][0], compon[0][1],treedate[0][0], treedate[0][1],  post[1]))
+                elif len(twodate):
+                    print("in two date")
+                    for compon in compons:
+                        if compon[0][0] in string and compon[0][1] in post[1] and compon[1] in post[1]:
+                            good.append((post[0], compon[0][0], compon[0][1],twodate[0][0], twodate[0][1],  post[1]))
+
 
         # to write for excisting xlsx
-        write_xlsx(good, filename)
+        #write_xlsx(good, filename)
         # to wite for excisting csv
-        #write_csv(good, filename)
+        write_csv(good, filename)
 
 def write_csv(good, filename):
     with open(filename, 'a') as resultFile:
@@ -260,7 +277,7 @@ def write_csv(good, filename):
 
 
 def write_xlsx(good, filename):
-    labels = ['link', 'mark', 'model', 'post']
+    labels = ['link', 'mark', 'model','start', 'end', 'post']
     df = pandas.DataFrame.from_records(good, columns=labels)
     book = load_workbook(filename)
     writer = pandas.ExcelWriter(filename, engine='openpyxl')
